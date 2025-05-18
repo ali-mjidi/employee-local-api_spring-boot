@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/employees")
 public class EmployeeRestController {
 
-	private EmployeeService employeeService;
-	private ObjectMapper objectMapper;
+	private final EmployeeService employeeService;
+	private final ObjectMapper objectMapper;
 
 	@Autowired
 	public EmployeeRestController(EmployeeService employeeService, ObjectMapper objectMapper) {
@@ -23,12 +23,14 @@ public class EmployeeRestController {
 		this.objectMapper = objectMapper;
 	}
 
-	@GetMapping("/employees")
+	// Get all employees
+	@GetMapping
 	public List<Employee> getAllEmployees() {
 		return employeeService.findAll();
 	}
 
-	@GetMapping("/employees/{employeeId}")
+	// Get one employee by ID
+	@GetMapping("/{employeeId}")
 	public Employee getEmployee(@PathVariable int employeeId) {
 		Employee foundEmployee = employeeService.findById(employeeId);
 
@@ -38,43 +40,45 @@ public class EmployeeRestController {
 		return foundEmployee;
 	}
 
-	@PostMapping("/employees")
+	// Add new employee
+	@PostMapping
 	public Employee addEmployee(@RequestBody Employee newEmployee) {
-		// In the case of client send id in the request body, set id to 0
-		newEmployee.setId(0);
+		// In the case of client sends id in the request body, set id to 0
+		newEmployee.setId(0); // to force insert instead of update
 
-		Employee dbEmployee = employeeService.save(newEmployee);
-
-		return dbEmployee;
+		return employeeService.save(newEmployee);
 	}
 
-	@PutMapping("/employees")
+	// Full update of employee
+	@PutMapping
 	public Employee updateEmployee(@RequestBody Employee theEmployee) {
-		Employee dbEmployee = employeeService.save(theEmployee);
-
-		return dbEmployee;
+		return employeeService.save(theEmployee);
 	}
 
-	@PatchMapping("/employees/{employeeId}")
+	// Partial update of employee using PATCH
+	@PatchMapping("/{employeeId}")
 	public Employee updateEmployee(@PathVariable int employeeId,
 								   @RequestBody Map<String, Object> patchPayload) {
+
 		// Find target employee
 		Employee tempEmployee = employeeService.findById(employeeId);
 
 		if (tempEmployee == null)
 			throw new RuntimeException("Employee id not found - " + employeeId);
 
+		// Block id update via patch
 		if (patchPayload.containsKey("id"))
 			throw new RuntimeException("Employee id field is not allowed in request body - " + employeeId);
 
-		// apply/merge payload changes to target employee
-		Employee patchedEmployee = apply(patchPayload, tempEmployee);
+		// Apply/merge payload changes to target employee
+		Employee patchedEmployee = applyPatch(patchPayload, tempEmployee);
 
-		// save updated employee
+		// Save updated employee
 		return employeeService.save(patchedEmployee);
 	}
 
-	private Employee apply(Map<String, Object> patchPayload, Employee tempEmployee) {
+	// Helper method to apply PATCH fields into existing employee
+	private Employee applyPatch(Map<String, Object> patchPayload, Employee tempEmployee) {
 		// Convert employee object to json object node
 		ObjectNode employeeNode = objectMapper.convertValue(tempEmployee, ObjectNode.class);
 
@@ -84,13 +88,16 @@ public class EmployeeRestController {
 		// Merge patch partial update(s)
 		employeeNode.setAll(payloadNode);
 
+		// Convert back to Employee object
 		return objectMapper.convertValue(employeeNode, Employee.class);
 	}
 
-	@DeleteMapping("/employees/{employeeId}")
+	// Delete employee by ID
+	@DeleteMapping("/{employeeId}")
 	public void deleteEmployee(@PathVariable int employeeId) {
 		employeeService.deleteById(employeeId);
 
+		// Done
 		System.out.println("done");
 	}
 }
