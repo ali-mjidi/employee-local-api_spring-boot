@@ -5,6 +5,7 @@ import com.example.employeeCrud.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class EmployeeRestController {
 		Employee foundEmployee = employeeService.findById(employeeId);
 
 		if (foundEmployee == null)
-			throw new RuntimeException("Employee id not found - " + employeeId);
+			throw new EmployeeNotFoundException(employeeId);
 
 		return foundEmployee;
 	}
@@ -64,7 +65,7 @@ public class EmployeeRestController {
 		Employee tempEmployee = employeeService.findById(employeeId);
 
 		if (tempEmployee == null)
-			throw new RuntimeException("Employee id not found - " + employeeId);
+			throw new EmployeeNotFoundException(employeeId);
 
 		// Block id update via patch
 		if (patchPayload.containsKey("id"))
@@ -94,10 +95,16 @@ public class EmployeeRestController {
 
 	// Delete employee by ID
 	@DeleteMapping("/{employeeId}")
-	public void deleteEmployee(@PathVariable int employeeId) {
+	public Map<String, Object> deleteEmployee(@PathVariable int employeeId) {
+		if (employeeService.findById(employeeId) == null) {
+			throw new EmployeeNotFoundException(employeeId);
+		}
+
 		employeeService.deleteById(employeeId);
 
-		// Done
-		System.out.println("done");
+		return Map.ofEntries(
+				Map.entry("status", HttpStatus.OK.value()),
+				Map.entry("message", "Deleted employee id - " + employeeId)
+		);
 	}
 }
