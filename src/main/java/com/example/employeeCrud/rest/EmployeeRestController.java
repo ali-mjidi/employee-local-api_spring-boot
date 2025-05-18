@@ -34,12 +34,26 @@ public class EmployeeRestController {
 	}
 
 	@PostMapping("/employees")
-	public Employee addEmployee(@RequestBody Employee theEmployee) {
+	public Employee addEmployee(@RequestBody Employee newEmployee) {
 		// In the case of client send id in the request body, set id to 0
-		theEmployee.setId(0);
+		newEmployee.setId(0);
 
+		Employee dbEmployee = employeeService.save(newEmployee);
+
+		return dbEmployee;
+	}
+
+	@PutMapping("/employees")
+	public Employee updateEmployee(@RequestBody Employee theEmployee) {
 		Employee dbEmployee = employeeService.save(theEmployee);
 
 		return dbEmployee;
+	}
+
+	@DeleteMapping("/employees/{employeeID}")
+	public void deleteEmployee(@PathVariable int employeeID) {
+		employeeService.deleteById(employeeID);
+
+		System.out.println("done");
 	}
 }
