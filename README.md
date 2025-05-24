@@ -44,3 +44,8 @@ DB_PASSWORD=your_password
 | PATCH  | `/api/employees/{id}`  | MANAGER        |
 | DELETE | `/api/employees/{id}`  | ADMIN          |
 
+## 📌 Note
+
+This project is intended for educational purposes only and is not designed for production use.
+
+
